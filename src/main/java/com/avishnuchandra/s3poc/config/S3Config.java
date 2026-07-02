@@ -7,10 +7,10 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 import java.net.URI;
 import java.time.Duration;
@@ -36,8 +36,7 @@ public class S3Config {
                 ? null
                 : StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
 
-        S3Client.Builder b = S3Client.builder()
-                .httpClientBuilder(UrlConnectionHttpClient.builder())
+        S3ClientBuilder b = S3Client.builder()
                 .overrideConfiguration(ClientOverrideConfiguration.builder()
                         .apiCallAttemptTimeout(Duration.ofSeconds(60))
                         .build())

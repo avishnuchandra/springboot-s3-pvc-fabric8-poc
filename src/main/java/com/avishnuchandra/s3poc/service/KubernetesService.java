@@ -1,7 +1,17 @@
 package com.avishnuchandra.s3poc.service;
 
 import com.avishnuchandra.s3poc.controller.KubernetesController;
-import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.EnvVarBuilder;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
+import io.fabric8.kubernetes.api.model.PodSpecBuilder;
+import io.fabric8.kubernetes.api.model.PodTemplateSpec;
+import io.fabric8.kubernetes.api.model.PodTemplateSpecBuilder;
+import io.fabric8.kubernetes.api.model.batch.v1.Job;
+import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
+import io.fabric8.kubernetes.api.model.batch.v1.JobSpecBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.springframework.stereotype.Service;
@@ -72,18 +82,18 @@ public class KubernetesService {
                         .build())
                 .build();
 
-        Job job = new io.fabric8.kubernetes.api.model.JobBuilder()
+        Job job = new JobBuilder()
                 .withMetadata(new ObjectMetaBuilder()
                         .withName(jobRequest.name)
                         .withNamespace(ns)
                         .build())
-                .withSpec(new io.fabric8.kubernetes.api.model.JobSpecBuilder()
+                .withSpec(new JobSpecBuilder()
                         .withTemplate(podTemplate)
                         .withBackoffLimit(3)
                         .build())
                 .build();
 
-        io.fabric8.kubernetes.api.model.Job created = kubernetesClient.batch()
+        Job created = kubernetesClient.batch()
                 .v1()
                 .jobs()
                 .inNamespace(ns)
