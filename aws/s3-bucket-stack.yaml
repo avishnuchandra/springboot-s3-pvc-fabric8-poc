@@ -1,0 +1,233 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Spring Boot S3 PVC Fabric8 POC - S3 bucket, lifecycle, and IAM role/policy
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Globally unique S3 bucket name (e.g., project-env-account-region)
+    AllowedPattern: '^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$'
+  Environment:
+    Type: String
+    Description: Deployment environment
+    AllowedValues: [dev, staging, prod]
+    Default: dev
+  EnableVersioning:
+    Type: String
+    Description: Enable object versioning
+    AllowedValues: ['true', 'false']
+    Default: 'true'
+  EncryptionType:
+    Type: String
+    Description: Server-side encryption type
+    AllowedValues: [AES256, KMS]
+    Default: AES256
+  KmsKeyArn:
+    Type: String
+    Description: KMS key ARN (required when EncryptionType=KMS)
+    Default: ''
+  RetentionDays:
+    Type: Number
+    Description: Base retention days used by lifecycle rules
+    Default: 30
+    MinValue: 1
+  InputTransitionDays:
+    Type: Number
+    Description: Days before transitioning input/ objects to STANDARD_IA
+    Default: 30
+    MinValue: 1
+  ErrorExpirationDays:
+    Type: Number
+    Description: Days before expiring objects in error/
+    Default: 30
+    MinValue: 1
+  ProcessingCleanupDays:
+    Type: Number
+    Description: Days before cleaning stale objects in processing/
+    Default: 2
+    MinValue: 1
+  CompletedToGlacierDays:
+    Type: Number
+    Description: Days before transitioning completed/ objects to Glacier Instant Retrieval
+    Default: 30
+    MinValue: 1
+  LoggingEnabled:
+    Type: String
+    Description: Enable S3 server access logging
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+  AccessLogBucketName:
+    Type: String
+    Description: Existing bucket name where S3 server access logs are written when logging is enabled
+    Default: ''
+  AppRoleName:
+    Type: String
+    Description: IAM role name for the Spring Boot application
+    Default: springboot-s3-app-role
+
+Conditions:
+  VersioningEnabled: !Equals [!Ref EnableVersioning, 'true']
+  UseKmsEncryption: !Equals [!Ref EncryptionType, KMS]
+  EnableBucketLogging: !Equals [!Ref LoggingEnabled, 'true']
+
+Resources:
+  S3DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: !If [VersioningEnabled, Enabled, Suspended]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: !If [UseKmsEncryption, aws:kms, AES256]
+              KMSMasterKeyID: !If [UseKmsEncryption, !Ref KmsKeyArn, !Ref AWS::NoValue]
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration: !If
+        - EnableBucketLogging
+        - DestinationBucketName: !Ref AccessLogBucketName
+          LogFilePrefix: !Sub '${Environment}/logs/'
+        - !Ref AWS::NoValue
+      LifecycleConfiguration:
+        Rules:
+          - Id: InputTransitionPolicy
+            Status: Enabled
+            Prefix: input/
+            Transitions:
+              - TransitionInDays: !Ref InputTransitionDays
+                StorageClass: STANDARD_IA
+            NoncurrentVersionExpiration:
+              NoncurrentDays: !Ref RetentionDays
+          - Id: ErrorExpirationPolicy
+            Status: Enabled
+            Prefix: error/
+            ExpirationInDays: !Ref ErrorExpirationDays
+            NoncurrentVersionExpiration:
+              NoncurrentDays: !Ref ErrorExpirationDays
+          - Id: ProcessingCleanupPolicy
+            Status: Enabled
+            Prefix: processing/
+            ExpirationInDays: !Ref ProcessingCleanupDays
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: !Ref ProcessingCleanupDays
+          - Id: CompletedArchivePolicy
+            Status: Enabled
+            Prefix: completed/
+            Transitions:
+              - TransitionInDays: !Ref CompletedToGlacierDays
+                StorageClass: GLACIER_IR
+            NoncurrentVersionTransitions:
+              - TransitionInDays: !Ref CompletedToGlacierDays
+                StorageClass: GLACIER_IR
+          - Id: AccessLogRetentionPolicy
+            Status: Enabled
+            Prefix: logs/
+            ExpirationInDays: !Ref RetentionDays
+      Tags:
+        - Key: Project
+          Value: springboot-s3-pvc-fabric8-poc
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: cloudformation
+
+  S3AppPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub 's3-app-policy-${Environment}'
+      Description: Least privilege S3 access for Spring Boot processing folders
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ListOnlyScopedPrefixes
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+            Resource: !GetAtt S3DataBucket.Arn
+            Condition:
+              StringLike:
+                s3:prefix:
+                  - input/*
+                  - processing/*
+                  - archive/*
+                  - error/*
+                  - completed/*
+                  - logs/*
+          - Sid: ReadInputAndProcessing
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+            Resource:
+              - !Sub '${S3DataBucket.Arn}/input/*'
+              - !Sub '${S3DataBucket.Arn}/processing/*'
+          - Sid: WriteProcessingAndOutcomePrefixes
+            Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource:
+              - !Sub '${S3DataBucket.Arn}/processing/*'
+              - !Sub '${S3DataBucket.Arn}/archive/*'
+              - !Sub '${S3DataBucket.Arn}/error/*'
+              - !Sub '${S3DataBucket.Arn}/completed/*'
+              - !Sub '${S3DataBucket.Arn}/logs/*'
+          - Sid: DeleteForCleanup
+            Effect: Allow
+            Action:
+              - s3:DeleteObject
+              - s3:DeleteObjectVersion
+            Resource:
+              - !Sub '${S3DataBucket.Arn}/processing/*'
+              - !Sub '${S3DataBucket.Arn}/error/*'
+
+  S3AppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref AppRoleName
+      Description: IAM role for Spring Boot S3 access from EC2/EKS/OpenShift workloads
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref S3AppPolicy
+      Tags:
+        - Key: Project
+          Value: springboot-s3-pvc-fabric8-poc
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  BucketName:
+    Description: S3 bucket name
+    Value: !Ref S3DataBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketName'
+  BucketArn:
+    Description: S3 bucket ARN
+    Value: !GetAtt S3DataBucket.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketArn'
+  BucketUrl:
+    Description: Bucket URL
+    Value: !Sub 's3://${S3DataBucket}'
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketUrl'
+  S3AppRoleArn:
+    Description: IAM role ARN for the application
+    Value: !GetAtt S3AppRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-S3AppRoleArn'
+  S3AppPolicyArn:
+    Description: IAM managed policy ARN for the application
+    Value: !Ref S3AppPolicy
+    Export:
+      Name: !Sub '${AWS::StackName}-S3AppPolicyArn'

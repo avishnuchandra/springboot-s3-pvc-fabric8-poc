@@ -133,13 +133,22 @@ docker run -e S3_ENDPOINT=http://host.docker.internal:4566 \
 
 ### Prerequisites
 
-1. Create S3 credentials secret (replace with actual credentials):
+1. Provision S3 bucket + IAM with CloudFormation:
 
 ```bash
-kubectl apply -f k8s/secret-example.yaml
+./aws/scripts/create-stack.sh springboot-s3-stack ./aws/examples/dev-stack-params.json
+./aws/scripts/setup-bucket-folders.sh <bucket-name>
+./aws/scripts/test-s3-setup.sh <bucket-name>
 ```
 
-2. Edit `k8s/secret-example.yaml` with real credentials and apply.
+2. Create S3 credentials secret (replace with actual credentials):
+
+```bash
+# edit k8s/secret.yaml first; do not apply placeholder values as-is
+kubectl apply -f k8s/secret.yaml
+```
+
+3. Edit `k8s/secret.yaml` with real credentials (or `role-arn` for IRSA/OIDC mode).
 
 ### Deploy to Kubernetes
 
@@ -170,6 +179,21 @@ oc apply -f k8s/route.yaml
 oc get route springboot-s3-pvc
 ```
 
+For a full OpenShift checklist, see `OPENSHIFT-DEPLOYMENT.md`.
+
+## AWS S3 CloudFormation
+
+Key assets are under `aws/`:
+
+- `aws/s3-bucket-stack.yaml` - S3 bucket, lifecycle policies, IAM role and policy
+- `aws/iam/s3-app-policy.json` - least-privilege folder-scoped policy
+- `aws/iam/s3-app-role.yaml` - standalone role template
+- `aws/iam/oidc-provider-setup.yaml` - optional OIDC provider for OpenShift service accounts
+- `aws/scripts/` - create, update, delete, folder setup, grant permissions, and validation scripts
+- `aws/examples/` - dev/staging/prod CloudFormation parameter files
+
+See `aws/AWS-S3-SETUP.md` for the full setup guide and troubleshooting.
+
 ## Environment Variables
 
 ### S3 Configuration
@@ -179,6 +203,14 @@ oc get route springboot-s3-pvc
 - `AWS_REGION` - AWS region (default: `us-east-1`)
 - `S3_ENDPOINT` - S3 endpoint override (use for LocalStack/MinIO)
 - `S3_BUCKET` - S3 bucket name (default: `app-bucket`)
+- `S3_INPUT_PREFIX` - Input folder prefix (default: `input/`)
+- `S3_PROCESSING_PREFIX` - Processing folder prefix (default: `processing/`)
+- `S3_ARCHIVE_PREFIX` - Archive folder prefix (default: `archive/`)
+- `S3_ERROR_PREFIX` - Error folder prefix (default: `error/`)
+- `S3_COMPLETED_PREFIX` - Completed folder prefix (default: `completed/`)
+- `S3_LOGS_PREFIX` - Logs folder prefix (default: `logs/`)
+- `AWS_ROLE_ARN` - Optional IAM role ARN for web identity role assumption
+- `AWS_WEB_IDENTITY_TOKEN_FILE` - Optional token file path for web identity
 
 ### Application Configuration
 
@@ -209,8 +241,29 @@ k8s/
 ├── pvc.yaml           # PersistentVolumeClaim
 ├── rbac.yaml          # ServiceAccount, Role, RoleBinding
 ├── configmap.yaml     # ConfigMap
+├── secret.yaml        # Secret with IAM credentials/role ARN references
 ├── secret-example.yaml # Example Secret
 └── route.yaml         # OpenShift Route
+
+aws/
+├── s3-bucket-stack.yaml          # Main CloudFormation template
+├── iam/
+│   ├── s3-app-policy.json        # IAM policy for app
+│   ├── s3-app-role.yaml          # IAM role template
+│   └── oidc-provider-setup.yaml  # Optional OIDC provider template
+├── scripts/
+│   ├── create-stack.sh           # Deploy stack
+│   ├── update-stack.sh           # Update stack
+│   ├── delete-stack.sh           # Delete stack
+│   ├── setup-bucket-folders.sh   # Create folder prefixes
+│   ├── grant-permissions.sh      # Attach IAM policy
+│   └── test-s3-setup.sh          # Validate S3 setup
+├── AWS-S3-SETUP.md               # AWS deployment guide
+├── lifecycle-policies-config.json # Lifecycle reference values
+└── examples/
+    ├── dev-stack-params.json
+    ├── staging-stack-params.json
+    └── prod-stack-params.json
 ```
 
 ## CI/CD

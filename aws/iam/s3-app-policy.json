@@ -1,0 +1,63 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListOnlyScopedPrefixes",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::${BUCKET_NAME}",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "input/*",
+            "processing/*",
+            "archive/*",
+            "error/*",
+            "completed/*",
+            "logs/*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ReadInputAndProcessing",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:GetObjectVersion"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${BUCKET_NAME}/input/*",
+        "arn:aws:s3:::${BUCKET_NAME}/processing/*"
+      ]
+    },
+    {
+      "Sid": "WriteProcessingAndOutcomePrefixes",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${BUCKET_NAME}/processing/*",
+        "arn:aws:s3:::${BUCKET_NAME}/archive/*",
+        "arn:aws:s3:::${BUCKET_NAME}/error/*",
+        "arn:aws:s3:::${BUCKET_NAME}/completed/*",
+        "arn:aws:s3:::${BUCKET_NAME}/logs/*"
+      ]
+    },
+    {
+      "Sid": "DeleteForCleanup",
+      "Effect": "Allow",
+      "Action": [
+        "s3:DeleteObject",
+        "s3:DeleteObjectVersion"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${BUCKET_NAME}/processing/*",
+        "arn:aws:s3:::${BUCKET_NAME}/error/*"
+      ]
+    }
+  ]
+}

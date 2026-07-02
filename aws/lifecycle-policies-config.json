@@ -1,0 +1,26 @@
+{
+  "input": {
+    "prefix": "input/",
+    "transitionStorageClass": "STANDARD_IA",
+    "transitionAfterDays": 30,
+    "noncurrentExpirationAfterDays": 30
+  },
+  "processing": {
+    "prefix": "processing/",
+    "cleanupAfterDays": 2,
+    "abortMultipartAfterDays": 2
+  },
+  "error": {
+    "prefix": "error/",
+    "expirationAfterDays": 30
+  },
+  "completed": {
+    "prefix": "completed/",
+    "transitionStorageClass": "GLACIER_IR",
+    "transitionAfterDays": 30
+  },
+  "logs": {
+    "prefix": "logs/",
+    "expirationAfterDays": 30
+  }
+}

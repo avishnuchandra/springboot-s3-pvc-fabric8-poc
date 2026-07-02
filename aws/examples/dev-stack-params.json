@@ -1,0 +1,12 @@
+[
+  {"ParameterKey": "BucketName", "ParameterValue": "springboot-s3-pvc-dev-123456789012-us-east-1"},
+  {"ParameterKey": "Environment", "ParameterValue": "dev"},
+  {"ParameterKey": "EnableVersioning", "ParameterValue": "true"},
+  {"ParameterKey": "EncryptionType", "ParameterValue": "AES256"},
+  {"ParameterKey": "RetentionDays", "ParameterValue": "30"},
+  {"ParameterKey": "InputTransitionDays", "ParameterValue": "30"},
+  {"ParameterKey": "ErrorExpirationDays", "ParameterValue": "30"},
+  {"ParameterKey": "ProcessingCleanupDays", "ParameterValue": "2"},
+  {"ParameterKey": "CompletedToGlacierDays", "ParameterValue": "30"},
+  {"ParameterKey": "LoggingEnabled", "ParameterValue": "false"}
+]

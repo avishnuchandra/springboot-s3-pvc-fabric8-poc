@@ -5,3 +5,9 @@ metadata:
 data:
   s3.region: us-east-1
   s3.bucket: app-bucket
+  s3.prefix.input: input/
+  s3.prefix.processing: processing/
+  s3.prefix.archive: archive/
+  s3.prefix.error: error/
+  s3.prefix.completed: completed/
+  s3.prefix.logs: logs/
