@@ -1,0 +1,16 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: springboot-s3-pvc
+  namespace: springboot-s3-pvc
+  labels:
+    app: springboot-s3-pvc
+    app.kubernetes.io/name: springboot-s3-pvc
+    app.kubernetes.io/component: availability
+spec:
+  # At least 1 pod must remain available during voluntary disruptions
+  # (node drains, rolling updates, etc.)
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: springboot-s3-pvc

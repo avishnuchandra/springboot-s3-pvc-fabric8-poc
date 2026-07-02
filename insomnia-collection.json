@@ -1,0 +1,362 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-07-02T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v9.3.3",
+  "resources": [
+    {
+      "_id": "wrk_springboot_s3_pvc",
+      "_type": "workspace",
+      "name": "Spring Boot S3 PVC Fabric8",
+      "description": "API collection for S3, PVC, and Kubernetes operations",
+      "scope": "collection",
+      "parentId": null
+    },
+
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "name": "Base Environment",
+      "parentId": "wrk_springboot_s3_pvc",
+      "data": {
+        "base_url": "http://localhost:8080"
+      },
+      "color": null,
+      "isPrivate": false
+    },
+    {
+      "_id": "env_local",
+      "_type": "environment",
+      "name": "Local (localhost)",
+      "parentId": "env_base",
+      "data": {
+        "base_url": "http://localhost:8080"
+      },
+      "color": "#00b3a4",
+      "isPrivate": false
+    },
+    {
+      "_id": "env_openshift_dev",
+      "_type": "environment",
+      "name": "OpenShift Dev",
+      "parentId": "env_base",
+      "data": {
+        "base_url": "https://springboot-s3-pvc-springboot-s3-pvc-dev.apps.cluster.example.com"
+      },
+      "color": "#e7008a",
+      "isPrivate": false
+    },
+    {
+      "_id": "env_openshift_staging",
+      "_type": "environment",
+      "name": "OpenShift Staging",
+      "parentId": "env_base",
+      "data": {
+        "base_url": "https://springboot-s3-pvc-springboot-s3-pvc-staging.apps.cluster.example.com"
+      },
+      "color": "#f4a522",
+      "isPrivate": false
+    },
+    {
+      "_id": "env_openshift_prod",
+      "_type": "environment",
+      "name": "OpenShift Prod",
+      "parentId": "env_base",
+      "data": {
+        "base_url": "https://springboot-s3-pvc-springboot-s3-pvc.apps.cluster.example.com"
+      },
+      "color": "#d0021b",
+      "isPrivate": false
+    },
+
+    {
+      "_id": "fld_health",
+      "_type": "request_group",
+      "name": "Health Checks",
+      "parentId": "wrk_springboot_s3_pvc",
+      "description": "Aggregated and individual health check endpoints"
+    },
+    {
+      "_id": "req_health_all",
+      "_type": "request",
+      "name": "Health - All",
+      "parentId": "fld_health",
+      "method": "GET",
+      "url": "{{ _.base_url }}/health/all",
+      "description": "Aggregated health check for S3, PVC, and Kubernetes services",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_health_s3",
+      "_type": "request",
+      "name": "Health - S3",
+      "parentId": "fld_health",
+      "method": "GET",
+      "url": "{{ _.base_url }}/s3/health",
+      "description": "S3 service health check",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_health_pvc",
+      "_type": "request",
+      "name": "Health - PVC",
+      "parentId": "fld_health",
+      "method": "GET",
+      "url": "{{ _.base_url }}/pvc/health",
+      "description": "PVC service health check",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_health_k8s",
+      "_type": "request",
+      "name": "Health - Kubernetes",
+      "parentId": "fld_health",
+      "method": "GET",
+      "url": "{{ _.base_url }}/k8s/health",
+      "description": "Kubernetes service health check",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_actuator_health",
+      "_type": "request",
+      "name": "Actuator - Health",
+      "parentId": "fld_health",
+      "method": "GET",
+      "url": "{{ _.base_url }}/actuator/health",
+      "description": "Spring Boot Actuator health endpoint",
+      "headers": [],
+      "body": {}
+    },
+
+    {
+      "_id": "fld_s3",
+      "_type": "request_group",
+      "name": "S3 Operations",
+      "parentId": "wrk_springboot_s3_pvc",
+      "description": "AWS S3 bucket and object operations"
+    },
+    {
+      "_id": "req_s3_list_buckets",
+      "_type": "request",
+      "name": "List Buckets",
+      "parentId": "fld_s3",
+      "method": "GET",
+      "url": "{{ _.base_url }}/s3/buckets",
+      "description": "List all accessible S3 buckets",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_s3_list_files",
+      "_type": "request",
+      "name": "List Files",
+      "parentId": "fld_s3",
+      "method": "GET",
+      "url": "{{ _.base_url }}/s3/files?bucket=app-bucket",
+      "description": "List objects in a specified S3 bucket",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_s3_upload",
+      "_type": "request",
+      "name": "Upload File",
+      "parentId": "fld_s3",
+      "method": "POST",
+      "url": "{{ _.base_url }}/s3/upload",
+      "description": "Upload a file to the configured S3 bucket",
+      "headers": [],
+      "body": {
+        "mimeType": "multipart/form-data",
+        "params": [
+          {
+            "name": "file",
+            "value": "",
+            "type": "file",
+            "fileName": "/path/to/your/file.txt"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "req_s3_download",
+      "_type": "request",
+      "name": "Download File",
+      "parentId": "fld_s3",
+      "method": "GET",
+      "url": "{{ _.base_url }}/s3/download/filename.txt",
+      "description": "Download an object from S3 by key",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_s3_delete",
+      "_type": "request",
+      "name": "Delete File",
+      "parentId": "fld_s3",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/s3/delete/filename.txt",
+      "description": "Delete an object from S3 by key",
+      "headers": [],
+      "body": {}
+    },
+
+    {
+      "_id": "fld_pvc",
+      "_type": "request_group",
+      "name": "PVC Operations",
+      "parentId": "wrk_springboot_s3_pvc",
+      "description": "Persistent Volume Claim file operations (mounted at /mnt/data)"
+    },
+    {
+      "_id": "req_pvc_write",
+      "_type": "request",
+      "name": "Write File",
+      "parentId": "fld_pvc",
+      "method": "POST",
+      "url": "{{ _.base_url }}/pvc/write",
+      "description": "Write a file to the PVC",
+      "headers": [],
+      "body": {
+        "mimeType": "multipart/form-data",
+        "params": [
+          {
+            "name": "file",
+            "value": "",
+            "type": "file",
+            "fileName": "/path/to/your/file.txt"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "req_pvc_read",
+      "_type": "request",
+      "name": "Read File",
+      "parentId": "fld_pvc",
+      "method": "GET",
+      "url": "{{ _.base_url }}/pvc/read/filename.txt",
+      "description": "Read a file from the PVC by filename",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_pvc_list",
+      "_type": "request",
+      "name": "List Files",
+      "parentId": "fld_pvc",
+      "method": "GET",
+      "url": "{{ _.base_url }}/pvc/files",
+      "description": "List all files stored on the PVC",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_pvc_append",
+      "_type": "request",
+      "name": "Append to File",
+      "parentId": "fld_pvc",
+      "method": "POST",
+      "url": "{{ _.base_url }}/pvc/append/filename.txt",
+      "description": "Append content to an existing PVC file",
+      "headers": [],
+      "body": {
+        "mimeType": "multipart/form-data",
+        "params": [
+          {
+            "name": "file",
+            "value": "",
+            "type": "file",
+            "fileName": "/path/to/your/file.txt"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "req_pvc_delete",
+      "_type": "request",
+      "name": "Delete File",
+      "parentId": "fld_pvc",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/pvc/delete/filename.txt",
+      "description": "Delete a file from the PVC by filename",
+      "headers": [],
+      "body": {}
+    },
+
+    {
+      "_id": "fld_k8s",
+      "_type": "request_group",
+      "name": "Kubernetes Operations",
+      "parentId": "wrk_springboot_s3_pvc",
+      "description": "Kubernetes/OpenShift resource management via Fabric8"
+    },
+    {
+      "_id": "req_k8s_list_pods",
+      "_type": "request",
+      "name": "List Pods",
+      "parentId": "fld_k8s",
+      "method": "GET",
+      "url": "{{ _.base_url }}/k8s/pods",
+      "description": "List pods in the current namespace",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_k8s_list_jobs",
+      "_type": "request",
+      "name": "List Jobs",
+      "parentId": "fld_k8s",
+      "method": "GET",
+      "url": "{{ _.base_url }}/k8s/jobs",
+      "description": "List batch jobs in the current namespace",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_k8s_create_job",
+      "_type": "request",
+      "name": "Create Job",
+      "parentId": "fld_k8s",
+      "method": "POST",
+      "url": "{{ _.base_url }}/k8s/jobs",
+      "description": "Create a new Kubernetes batch job",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"test-job\",\n  \"image\": \"busybox:1.28\",\n  \"command\": [\"sh\", \"-c\", \"echo hello\"]\n}"
+      }
+    },
+    {
+      "_id": "req_k8s_delete_job",
+      "_type": "request",
+      "name": "Delete Job",
+      "parentId": "fld_k8s",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/k8s/jobs/test-job",
+      "description": "Delete a Kubernetes batch job by name",
+      "headers": [],
+      "body": {}
+    },
+    {
+      "_id": "req_k8s_namespace",
+      "_type": "request",
+      "name": "Get Current Namespace",
+      "parentId": "fld_k8s",
+      "method": "GET",
+      "url": "{{ _.base_url }}/k8s/namespace",
+      "description": "Retrieve the namespace the application is running in",
+      "headers": [],
+      "body": {}
+    }
+  ]
+}

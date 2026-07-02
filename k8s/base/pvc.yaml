@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: springboot-pvc
+  namespace: springboot-s3-pvc
+  labels:
+    app: springboot-s3-pvc
+    app.kubernetes.io/name: springboot-s3-pvc
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # Omit storageClassName to use the cluster default.
+  # On OpenShift with ODF: ocs-storagecluster-ceph-rbd
+  # On AWS EKS/ROSA:       gp3-csi
+  # storageClassName: gp3-csi
