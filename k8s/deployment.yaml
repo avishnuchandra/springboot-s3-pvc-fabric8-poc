@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         app: springboot-s3-pvc
+      annotations:
+        iam.amazonaws.com/role: springboot-s3-app-role
     spec:
       serviceAccountName: springboot-s3-pvc
       containers:
@@ -24,9 +26,45 @@ spec:
               name: http
           env:
             - name: S3_BUCKET
-              value: "app-bucket"
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-config
+                  key: s3.bucket
             - name: AWS_REGION
-              value: "us-east-1"
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-config
+                  key: s3.region
+            - name: S3_INPUT_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-config
+                  key: s3.prefix.input
+            - name: S3_PROCESSING_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-config
+                  key: s3.prefix.processing
+            - name: S3_ARCHIVE_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-config
+                  key: s3.prefix.archive
+            - name: S3_ERROR_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-config
+                  key: s3.prefix.error
+            - name: S3_COMPLETED_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-config
+                  key: s3.prefix.completed
+            - name: S3_LOGS_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-config
+                  key: s3.prefix.logs
             - name: S3_ENDPOINT
               value: ""
             - name: AWS_ACCESS_KEY_ID
@@ -41,6 +79,14 @@ spec:
                   name: s3-credentials
                   key: secret-key
                   optional: true
+            - name: AWS_ROLE_ARN
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: role-arn
+                  optional: true
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
           volumeMounts:
             - name: data
               mountPath: /mnt/data

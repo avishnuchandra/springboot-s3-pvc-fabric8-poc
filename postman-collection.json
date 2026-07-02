@@ -52,7 +52,7 @@
           "name": "List Files",
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/s3/files?bucket=app-bucket"
+            "url": "{{base_url}}/s3/files?bucket={{s3_bucket}}"
           }
         },
         {
@@ -206,6 +206,41 @@
     {
       "key": "base_url",
       "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "s3_bucket",
+      "value": "app-bucket",
+      "type": "string"
+    },
+    {
+      "key": "s3_input_prefix",
+      "value": "input/",
+      "type": "string"
+    },
+    {
+      "key": "s3_processing_prefix",
+      "value": "processing/",
+      "type": "string"
+    },
+    {
+      "key": "s3_archive_prefix",
+      "value": "archive/",
+      "type": "string"
+    },
+    {
+      "key": "s3_error_prefix",
+      "value": "error/",
+      "type": "string"
+    },
+    {
+      "key": "s3_completed_prefix",
+      "value": "completed/",
+      "type": "string"
+    },
+    {
+      "key": "s3_logs_prefix",
+      "value": "logs/",
       "type": "string"
     }
   ]

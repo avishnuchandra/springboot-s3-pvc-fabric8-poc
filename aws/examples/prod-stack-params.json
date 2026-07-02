@@ -1,0 +1,14 @@
+[
+  {"ParameterKey": "BucketName", "ParameterValue": "springboot-s3-pvc-prod-123456789012-us-east-1"},
+  {"ParameterKey": "Environment", "ParameterValue": "prod"},
+  {"ParameterKey": "EnableVersioning", "ParameterValue": "true"},
+  {"ParameterKey": "EncryptionType", "ParameterValue": "KMS"},
+  {"ParameterKey": "KmsKeyArn", "ParameterValue": "arn:aws:kms:us-east-1:123456789012:key/11111111-2222-3333-4444-555555555555"},
+  {"ParameterKey": "RetentionDays", "ParameterValue": "90"},
+  {"ParameterKey": "InputTransitionDays", "ParameterValue": "30"},
+  {"ParameterKey": "ErrorExpirationDays", "ParameterValue": "30"},
+  {"ParameterKey": "ProcessingCleanupDays", "ParameterValue": "2"},
+  {"ParameterKey": "CompletedToGlacierDays", "ParameterValue": "60"},
+  {"ParameterKey": "LoggingEnabled", "ParameterValue": "true"},
+  {"ParameterKey": "AccessLogBucketName", "ParameterValue": "central-s3-access-logs-bucket"}
+]

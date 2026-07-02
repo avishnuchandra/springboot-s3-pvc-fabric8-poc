@@ -4,6 +4,8 @@ kind: ServiceAccount
 metadata:
   name: springboot-s3-pvc
   namespace: default
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/springboot-s3-app-role
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role

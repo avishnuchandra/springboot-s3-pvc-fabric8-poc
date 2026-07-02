@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Optional OIDC provider setup for OpenShift service account IAM role assumption
+
+Parameters:
+  OidcUrl:
+    Type: String
+    Description: Full OIDC issuer URL including protocol (for example https://issuer.example.com)
+  ClientId:
+    Type: String
+    Default: sts.amazonaws.com
+  Thumbprint:
+    Type: String
+    Description: Root CA thumbprint for the OIDC provider
+
+Resources:
+  OpenShiftOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: !Ref OidcUrl
+      ClientIdList:
+        - !Ref ClientId
+      ThumbprintList:
+        - !Ref Thumbprint
+
+Outputs:
+  OidcProviderArn:
+    Value: !Ref OpenShiftOidcProvider

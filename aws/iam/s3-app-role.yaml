@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Standalone IAM role and managed policy attachment for Spring Boot S3 app access
+
+Parameters:
+  RoleName:
+    Type: String
+    Default: springboot-s3-app-role
+  ManagedPolicyArn:
+    Type: String
+    Description: ARN of the S3 managed policy to attach
+  OpenShiftOidcProviderArn:
+    Type: String
+    Description: Optional OIDC provider ARN for OpenShift service account web identity
+    Default: ''
+  OpenShiftOidcProviderHost:
+    Type: String
+    Description: OIDC provider host/path used in token claims (e.g., oidc.eks.us-east-1.amazonaws.com/id/ABC123)
+    Default: ''
+  OpenShiftNamespace:
+    Type: String
+    Default: default
+  OpenShiftServiceAccount:
+    Type: String
+    Default: springboot-s3-pvc
+
+Conditions:
+  UseOidcTrust: !And
+    - !Not [!Equals [!Ref OpenShiftOidcProviderArn, '']]
+    - !Not [!Equals [!Ref OpenShiftOidcProviderHost, '']]
+
+Resources:
+  SpringBootS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      Description: IAM role used by Spring Boot app running on EC2/EKS/OpenShift
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+                - eks.amazonaws.com
+            Action: sts:AssumeRole
+          - !If
+            - UseOidcTrust
+            - Effect: Allow
+              Principal:
+                Federated: !Ref OpenShiftOidcProviderArn
+              Action: sts:AssumeRoleWithWebIdentity
+              Condition:
+                StringEquals:
+                  !Sub '${OpenShiftOidcProviderHost}:sub': !Sub 'system:serviceaccount:${OpenShiftNamespace}:${OpenShiftServiceAccount}'
+                  !Sub '${OpenShiftOidcProviderHost}:aud': sts.amazonaws.com
+            - !Ref AWS::NoValue
+      ManagedPolicyArns:
+        - !Ref ManagedPolicyArn
+
+Outputs:
+  RoleArn:
+    Value: !GetAtt SpringBootS3Role.Arn
