@@ -20,8 +20,8 @@ public class PvcService {
         this.mountPath = Paths.get(mountPath).toAbsolutePath().normalize();
         try {
             Files.createDirectories(this.mountPath);
-        } catch (IOException ignored) {
-            log.warn("Failed to create PVC mount path directory at startup: {}", this.mountPath);
+        } catch (IOException e) {
+            log.warn("Failed to create PVC mount path directory at startup: {}", this.mountPath, e);
         }
     }
 
