@@ -6,7 +6,11 @@ plugins {
 
 group = 'com.avishnuchandra'
 version = '0.1.0'
-sourceCompatibility = '21'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
 
 repositories {
     mavenCentral()
@@ -16,6 +20,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'software.amazon.awssdk:s3:2.20.0'
+    implementation 'software.amazon.awssdk:url-connection-client:2.20.0'
     implementation 'io.fabric8:kubernetes-client:6.9.0'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
