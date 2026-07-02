@@ -2,6 +2,8 @@ package com.avishnuchandra.s3poc.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.*;
@@ -11,6 +13,7 @@ import java.util.stream.Collectors;
 @Service
 public class PvcService {
 
+    private static final Logger log = LoggerFactory.getLogger(PvcService.class);
     private final Path mountPath;
 
     public PvcService(@Value("${pvc.mountPath:/mnt/data}") String mountPath) {
@@ -18,7 +21,7 @@ public class PvcService {
         try {
             Files.createDirectories(this.mountPath);
         } catch (IOException ignored) {
-            // Directory may be managed externally and not writable during startup.
+            log.warn("Failed to create PVC mount path directory at startup: {}", this.mountPath);
         }
     }
 
