@@ -6,28 +6,23 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.localstack.LocalStackContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.net.URI;
 
+@Testcontainers(disabledWithoutDocker = true)
 public class S3IntegrationTest {
 
+    @Container
     static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:2.2"))
             .withServices(LocalStackContainer.Service.S3);
-
-    @BeforeAll
-    static void start() {
-        localstack.start();
-    }
-
-    @AfterAll
-    static void stop() {
-        localstack.stop();
-    }
 
     @Test
     void canUploadAndDownload() throws Exception {
@@ -37,6 +32,7 @@ public class S3IntegrationTest {
         String secretKey = localstack.getSecretKey();
 
         S3Client client = S3Client.builder()
+                .httpClientBuilder(UrlConnectionHttpClient.builder())
                 .endpointOverride(URI.create(endpoint))
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))

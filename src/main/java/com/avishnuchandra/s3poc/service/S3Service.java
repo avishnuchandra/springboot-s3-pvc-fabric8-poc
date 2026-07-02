@@ -27,7 +27,7 @@ public class S3Service {
         try {
             HeadBucketRequest head = HeadBucketRequest.builder().bucket(bucketName).build();
             s3Client.headBucket(head);
-        } catch (NoSuchBucketException | S3Exception e) {
+        } catch (S3Exception e) {
             CreateBucketRequest req = CreateBucketRequest.builder().bucket(bucketName).build();
             s3Client.createBucket(req);
         }
@@ -101,7 +101,11 @@ public class S3Service {
             ct = URLConnection.guessContentTypeFromName(filename);
         }
         if (ct == null) {
-            ct = URLConnection.guessContentTypeFromStream(new java.io.ByteArrayInputStream(content));
+            try {
+                ct = URLConnection.guessContentTypeFromStream(new java.io.ByteArrayInputStream(content));
+            } catch (java.io.IOException ignored) {
+                // fallback to default below
+            }
         }
         return ct == null ? "application/octet-stream" : ct;
     }

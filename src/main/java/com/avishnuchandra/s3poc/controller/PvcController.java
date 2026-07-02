@@ -52,7 +52,7 @@ public class PvcController {
     }
 
     @GetMapping("/read/{filename}")
-    public ResponseEntity<byte[]> read(@PathVariable String filename) {
+    public ResponseEntity<byte[]> read(@PathVariable String filename) throws Exception {
         byte[] data = pvcService.readFile(filename);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -60,13 +60,13 @@ public class PvcController {
     }
 
     @GetMapping("/files")
-    public ResponseEntity<List<String>> listFiles() {
+    public ResponseEntity<List<String>> listFiles() throws Exception {
         List<String> files = pvcService.listFiles();
         return ResponseEntity.ok(files);
     }
 
     @DeleteMapping("/delete/{filename}")
-    public ResponseEntity<Map<String, String>> delete(@PathVariable String filename) {
+    public ResponseEntity<Map<String, String>> delete(@PathVariable String filename) throws Exception {
         pvcService.deleteFile(filename);
         Map<String, String> response = new HashMap<>();
         response.put("filename", filename);
