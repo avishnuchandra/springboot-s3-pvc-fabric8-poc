@@ -2,8 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: springboot-s3-pvc
+  namespace: springboot-s3-pvc
   labels:
     app: springboot-s3-pvc
+    app.kubernetes.io/name: springboot-s3-pvc
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/version: "latest"
 spec:
   replicas: 1
   selector:
@@ -13,8 +17,14 @@ spec:
     metadata:
       labels:
         app: springboot-s3-pvc
+        app.kubernetes.io/name: springboot-s3-pvc
+        app.kubernetes.io/version: "latest"
     spec:
       serviceAccountName: springboot-s3-pvc
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
       containers:
         - name: app
           image: ghcr.io/avishnuchandra/springboot-s3-pvc-fabric8-poc:latest
@@ -22,40 +32,50 @@ spec:
           ports:
             - containerPort: 8080
               name: http
-          env:
-            - name: S3_BUCKET
-              value: "app-bucket"
-            - name: AWS_REGION
-              value: "us-east-1"
-            - name: S3_ENDPOINT
-              value: ""
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: s3-credentials
-                  key: access-key
-                  optional: true
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: s3-credentials
-                  key: secret-key
-                  optional: true
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: s3-config
+            - secretRef:
+                name: s3-credentials
+                optional: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           volumeMounts:
             - name: data
               mountPath: /mnt/data
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /health/all
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 12
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /health/all
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+            timeoutSeconds: 5
           livenessProbe:
             httpGet:
               path: /health/all
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 5
           resources:
             requests:
               memory: "256Mi"
@@ -67,4 +87,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: springboot-pvc
+        - name: tmp
+          emptyDir: {}
       restartPolicy: Always

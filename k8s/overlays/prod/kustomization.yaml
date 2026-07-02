@@ -1,0 +1,13 @@
+# Production overlay — real AWS S3, full resources, 3 replicas, full HPA range
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: springboot-s3-pvc
+
+resources:
+  - ../../base
+
+patches:
+  - path: configmap-patch.yaml
+  - path: deployment-patch.yaml
+  - path: hpa-patch.yaml

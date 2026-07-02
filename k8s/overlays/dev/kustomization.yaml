@@ -1,0 +1,13 @@
+# Development overlay — LocalStack S3, minimal resources, single replica
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: springboot-s3-pvc-dev
+
+resources:
+  - ../../base
+
+patches:
+  - path: configmap-patch.yaml
+  - path: deployment-patch.yaml
+  - path: hpa-patch.yaml

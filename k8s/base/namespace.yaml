@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: springboot-s3-pvc
+  labels:
+    app.kubernetes.io/name: springboot-s3-pvc
+    app.kubernetes.io/managed-by: kustomize
