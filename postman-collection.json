@@ -1,0 +1,212 @@
+{
+  "info": {
+    "name": "Spring Boot S3 PVC Fabric8",
+    "description": "API collection for S3, PVC, and Kubernetes operations",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Health Checks",
+      "item": [
+        {
+          "name": "Health - All",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health/all"
+          }
+        },
+        {
+          "name": "Health - S3",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/s3/health"
+          }
+        },
+        {
+          "name": "Health - PVC",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pvc/health"
+          }
+        },
+        {
+          "name": "Health - Kubernetes",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/k8s/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "S3 Operations",
+      "item": [
+        {
+          "name": "List Buckets",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/s3/buckets"
+          }
+        },
+        {
+          "name": "List Files",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/s3/files?bucket=app-bucket"
+          }
+        },
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/s3/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/file"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download File",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/s3/download/filename.txt"
+          }
+        },
+        {
+          "name": "Delete File",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/s3/delete/filename.txt"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PVC Operations",
+      "item": [
+        {
+          "name": "Write File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/pvc/write",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/file"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read File",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pvc/read/filename.txt"
+          }
+        },
+        {
+          "name": "List Files",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pvc/files"
+          }
+        },
+        {
+          "name": "Append File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/pvc/append/filename.txt",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/file"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete File",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/pvc/delete/filename.txt"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Kubernetes Operations",
+      "item": [
+        {
+          "name": "List Pods",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/k8s/pods"
+          }
+        },
+        {
+          "name": "List Jobs",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/k8s/jobs"
+          }
+        },
+        {
+          "name": "Create Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/k8s/jobs",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"test-job\",\n  \"image\": \"busybox:1.28\",\n  \"command\": [\"sh\", \"-c\", \"echo hello\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Job",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/k8s/jobs/test-job"
+          }
+        },
+        {
+          "name": "Get Current Namespace",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/k8s/namespace"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ]
+}

@@ -1,101 +1,278 @@
 # springboot-s3-pvc-fabric8-poc
 
-This repository is a proof-of-concept Spring Boot application that demonstrates integration with S3 and use of Persistent Volume Claims (PVC) for Kubernetes/OpenShift.
+A production-quality Spring Boot application that demonstrates integration with AWS S3, Kubernetes Persistent Volume Claims (PVC), and Kubernetes/OpenShift orchestration via Fabric8.
 
-This project targets Java 21 and uses Gradle (Groovy DSL). The Docker image is built with a multi-stage build and the application uses the AWS SDK v2 for S3 interactions.
+## Features
+
+- **S3 Integration**: List buckets, upload, download, delete objects, support for LocalStack
+- **PVC Operations**: Write, read, append, delete files on mounted persistent volumes
+- **Kubernetes Management**: List/create/delete pods and jobs using Fabric8 client
+- **Health Checks**: Aggregated health endpoint for all services
+- **RBAC Support**: ServiceAccount, Role, RoleBinding manifests for secure Kubernetes deployment
+- **Java 21**: Modern JVM with Spring Boot 3.2.4
+- **Comprehensive Testing**: Unit and integration tests with Testcontainers + LocalStack
 
 ## Prerequisites
 
-- Java 21 installed locally (for ./gradlew to run)
-- Docker (for LocalStack or building the Docker image)
-- kubectl and/or oc (OpenShift CLI) if deploying to a cluster
-- An S3-compatible endpoint or AWS credentials for production
+- Java 21 installed locally
+- Docker (for LocalStack, building images)
+- kubectl and/or oc (OpenShift CLI) for cluster deployments
+- AWS credentials or LocalStack endpoint for S3 development
 
-## Quick start - build
+## Quick Start - Local Development
 
-1. Build and run tests:
+### 1. Build the project
 
-   ```bash
-   ./gradlew clean build
-   ```
+```bash
+./gradlew clean build
+```
 
-2. Run the application locally (with real S3 credentials):
+### 2. Run tests
 
-   ```bash
-   export AWS_ACCESS_KEY_ID=YOUR_KEY
-   export AWS_SECRET_ACCESS_KEY=YOUR_SECRET
-   export AWS_REGION=us-east-1
-   export S3_BUCKET=app-bucket
-   
-   ./gradlew bootRun
-   ```
+```bash
+./gradlew test
+```
 
-## Local development with LocalStack (S3 emulator)
+### 3. Run with LocalStack (S3 emulation)
 
-1. Start LocalStack via docker-compose:
+Start LocalStack:
 
-   ```bash
-   docker-compose up -d
-   ```
+```bash
+docker-compose up -d
+```
 
-2. Create the S3 bucket (LocalStack exposes AWS CLI-compatible endpoint at http://localhost:4566):
+Create S3 bucket:
 
-   ```bash
-   aws --endpoint-url=http://localhost:4566 s3 mb s3://app-bucket
-   ```
+```bash
+aws --endpoint-url=http://localhost:4566 s3 mb s3://app-bucket
+```
 
-3. Run the application pointing to LocalStack endpoint:
+Run the application:
 
-   ```bash
-   export S3_ENDPOINT=http://localhost:4566
-   export AWS_REGION=us-east-1
-   export S3_BUCKET=app-bucket
-   
-   ./gradlew bootRun
-   ```
+```bash
+export S3_ENDPOINT=http://localhost:4566
+export AWS_REGION=us-east-1
+export S3_BUCKET=app-bucket
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
 
-## API
+./gradlew bootRun
+```
 
-- `POST /files` (multipart/form-data, field name "file") - uploads a file to S3
-- `GET /files/{key}` - downloads a file
-- `GET /files/health` - health check
+### 4. Test the APIs
 
-## Docker image
+Use the included Postman collection (`postman-collection.json`) or curl:
 
-Build locally:
+```bash
+# Health check
+curl http://localhost:8080/health/all
+
+# List buckets
+curl http://localhost:8080/s3/buckets
+
+# Upload file
+curl -F "file=@myfile.txt" http://localhost:8080/s3/upload
+
+# List PVC files
+curl http://localhost:8080/pvc/files
+```
+
+## API Documentation
+
+### Health Endpoints
+
+- `GET /health/all` - Aggregated health check for S3, PVC, Kubernetes
+- `GET /s3/health` - S3 service health
+- `GET /pvc/health` - PVC service health
+- `GET /k8s/health` - Kubernetes service health
+
+### S3 Operations
+
+- `GET /s3/buckets` - List all S3 buckets
+- `GET /s3/files?bucket=BUCKET_NAME` - List objects in a bucket
+- `POST /s3/upload` - Upload a file (multipart/form-data)
+- `GET /s3/download/{key}` - Download a file
+- `DELETE /s3/delete/{key}` - Delete a file from S3
+
+### PVC Operations (mounted at `/mnt/data`)
+
+- `POST /pvc/write` - Write a file to PVC (multipart/form-data)
+- `GET /pvc/read/{filename}` - Read a file from PVC
+- `GET /pvc/files` - List files in PVC
+- `POST /pvc/append/{filename}` - Append to a file (multipart/form-data)
+- `DELETE /pvc/delete/{filename}` - Delete a file from PVC
+
+### Kubernetes Operations
+
+- `GET /k8s/pods?namespace=NAMESPACE` - List pods
+- `GET /k8s/jobs?namespace=NAMESPACE` - List jobs
+- `POST /k8s/jobs?namespace=NAMESPACE` - Create a job (JSON body)
+- `DELETE /k8s/jobs/{name}?namespace=NAMESPACE` - Delete a job
+- `GET /k8s/namespace` - Get current namespace
+
+## Docker Image
+
+### Build locally
 
 ```bash
 docker build -t ghcr.io/avishnuchandra/springboot-s3-pvc-fabric8-poc:latest .
 ```
 
-## OpenShift / Kubernetes
-
-Apply manifests in k8s/:
+### Run container
 
 ```bash
+docker run -e S3_ENDPOINT=http://host.docker.internal:4566 \
+  -e S3_BUCKET=app-bucket \
+  -e AWS_ACCESS_KEY_ID=test \
+  -e AWS_SECRET_ACCESS_KEY=test \
+  -p 8080:8080 \
+  ghcr.io/avishnuchandra/springboot-s3-pvc-fabric8-poc:latest
+```
+
+## Kubernetes Deployment
+
+### Prerequisites
+
+1. Create S3 credentials secret (replace with actual credentials):
+
+```bash
+kubectl apply -f k8s/secret-example.yaml
+```
+
+2. Edit `k8s/secret-example.yaml` with real credentials and apply.
+
+### Deploy to Kubernetes
+
+```bash
+# Apply RBAC
+kubectl apply -f k8s/rbac.yaml
+
+# Apply ConfigMap
+kubectl apply -f k8s/configmap.yaml
+
+# Apply PVC
 kubectl apply -f k8s/pvc.yaml
+
+# Apply Deployment
 kubectl apply -f k8s/deployment.yaml
+
+# Apply Service
 kubectl apply -f k8s/service.yaml
 ```
 
-On OpenShift, create a route (if desired):
+### OpenShift Deployment
 
 ```bash
+# On OpenShift, add the Route:
 oc apply -f k8s/route.yaml
+
+# Access via route
+oc get route springboot-s3-pvc
 ```
-
-## CI
-
-A GitHub Actions workflow is included at `.github/workflows/ci.yml` to build and test the project on push.
-
-## Testing
-
-The project includes unit and integration tests which use Testcontainers + LocalStack for S3 integration in CI. You must have Docker running locally for integration tests to work.
 
 ## Environment Variables
 
-- `AWS_ACCESS_KEY_ID` - S3 access key (optional if using IAM roles)
-- `AWS_SECRET_ACCESS_KEY` - S3 secret key (optional if using IAM roles)
-- `AWS_REGION` - AWS region (default: us-east-1)
-- `S3_ENDPOINT` - S3 endpoint override (use for LocalStack or S3-compatible services)
-- `S3_BUCKET` - S3 bucket name (default: app-bucket)
+### S3 Configuration
+
+- `AWS_ACCESS_KEY_ID` - S3 access key (optional for IAM roles)
+- `AWS_SECRET_ACCESS_KEY` - S3 secret key (optional for IAM roles)
+- `AWS_REGION` - AWS region (default: `us-east-1`)
+- `S3_ENDPOINT` - S3 endpoint override (use for LocalStack/MinIO)
+- `S3_BUCKET` - S3 bucket name (default: `app-bucket`)
+
+### Application Configuration
+
+- `SPRING_PROFILES_ACTIVE` - Active profiles (e.g., `local`, `openshift`)
+- `SERVER_PORT` - Server port (default: `8080`)
+
+## Project Structure
+
+```
+src/main/java/com/avishnuchandra/s3poc/
+├── Application.java              # Spring Boot main class
+├── config/
+│   └── S3Config.java             # S3 client configuration
+├── controller/
+│   ├── S3Controller.java         # S3 REST endpoints
+│   ├── PvcController.java        # PVC REST endpoints
+│   ├── KubernetesController.java # Kubernetes REST endpoints
+│   ├── HealthController.java     # Health check endpoint
+│   └── FileController.java       # Legacy file endpoints
+├── service/
+│   ├── S3Service.java            # S3 operations
+│   ├── PvcService.java           # PVC file operations
+│   └── KubernetesService.java    # Kubernetes operations
+
+k8s/
+├── deployment.yaml     # Kubernetes Deployment
+├── service.yaml        # Kubernetes Service
+├── pvc.yaml           # PersistentVolumeClaim
+├── rbac.yaml          # ServiceAccount, Role, RoleBinding
+├── configmap.yaml     # ConfigMap
+├── secret-example.yaml # Example Secret
+└── route.yaml         # OpenShift Route
+```
+
+## CI/CD
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) automatically:
+- Builds the project on push
+- Runs all tests
+- Validates Dockerfile
+
+## Testing
+
+The project includes:
+
+- **Unit Tests**: Mock S3 service, controller tests
+- **Integration Tests**: Testcontainers + LocalStack for real S3 operations
+- **PVC Tests**: Local filesystem operations
+
+Run tests:
+
+```bash
+./gradlew test
+```
+
+## Troubleshooting
+
+### LocalStack not connecting
+
+```bash
+# Verify LocalStack is running
+docker ps | grep localstack
+
+# Check logs
+docker logs <container_id>
+
+# Restart
+docker-compose restart
+```
+
+### PVC permission denied
+
+Ensure the pod runs with appropriate permissions and the PVC is mounted:
+
+```bash
+kubectl describe pvc springboot-pvc
+```
+
+### Kubernetes client not connecting
+
+Verify kubeconfig or ServiceAccount:
+
+```bash
+# Check current context
+kubectl config current-context
+
+# Verify ServiceAccount in pod
+kubectl get sa springboot-s3-pvc
+```
+
+## Contributing
+
+See `CONTRIBUTING.md` for guidelines.
+
+## License
+
+MIT

@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: springboot-s3-pvc
+  labels:
+    app: springboot-s3-pvc
 spec:
   replicas: 1
   selector:
@@ -12,11 +14,14 @@ spec:
       labels:
         app: springboot-s3-pvc
     spec:
+      serviceAccountName: springboot-s3-pvc
       containers:
         - name: app
           image: ghcr.io/avishnuchandra/springboot-s3-pvc-fabric8-poc:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
+              name: http
           env:
             - name: S3_BUCKET
               value: "app-bucket"
@@ -24,18 +29,33 @@ spec:
               value: "us-east-1"
             - name: S3_ENDPOINT
               value: ""
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: access-key
+                  optional: true
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: secret-key
+                  optional: true
+          volumeMounts:
+            - name: data
+              mountPath: /mnt/data
           readinessProbe:
             httpGet:
-              path: /files/health
+              path: /health/all
               port: 8080
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /files/health
+              path: /health/all
               port: 8080
-            initialDelaySeconds: 15
-            periodSeconds: 20
+            initialDelaySeconds: 30
+            periodSeconds: 30
           resources:
             requests:
               memory: "256Mi"
@@ -43,4 +63,8 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: springboot-pvc
       restartPolicy: Always
