@@ -41,7 +41,7 @@ public class PvcController {
 
     @PostMapping(value = "/write", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> write(
-            @RequestPart("file") MultipartFile file) throws Exception {
+            @RequestPart("file") MultipartFile file) throws IOException {
         String filename = file.getOriginalFilename();
         byte[] bytes = file.getBytes();
         pvcService.writeFile(filename, bytes);
@@ -78,7 +78,7 @@ public class PvcController {
     @PostMapping("/append/{filename}")
     public ResponseEntity<Map<String, String>> append(
             @PathVariable String filename,
-            @RequestPart("file") MultipartFile file) throws Exception {
+            @RequestPart("file") MultipartFile file) throws IOException {
         byte[] bytes = file.getBytes();
         pvcService.appendFile(filename, bytes);
         Map<String, String> response = new HashMap<>();

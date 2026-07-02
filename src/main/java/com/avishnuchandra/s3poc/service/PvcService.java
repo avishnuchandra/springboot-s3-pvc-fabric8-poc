@@ -1,5 +1,6 @@
 package com.avishnuchandra.s3poc.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -10,13 +11,15 @@ import java.util.stream.Collectors;
 @Service
 public class PvcService {
 
-    private static final String DEFAULT_MOUNT_PATH = "/mnt/data";
-    private static final String MOUNT_PATH_PROPERTY = "pvc.mountPath";
-    private static final String FALLBACK_DIRECTORY_NAME = "springboot-s3-pvc-fabric8-poc";
     private final Path mountPath;
 
-    public PvcService() {
-        this.mountPath = initializeMountPath();
+    public PvcService(@Value("${pvc.mountPath:/mnt/data}") String mountPath) {
+        this.mountPath = Paths.get(mountPath).toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(this.mountPath);
+        } catch (IOException ignored) {
+            // Directory may be managed externally and not writable during startup.
+        }
     }
 
     public void checkHealth() throws IOException {
@@ -63,29 +66,6 @@ public class PvcService {
                     .filter(Files::isRegularFile)
                     .map(p -> p.getFileName().toString())
                     .collect(Collectors.toList());
-        }
-    }
-
-    /**
-     * Resolves the PVC mount path from {@code pvc.mountPath} system property, defaulting to /mnt/data,
-     * and falls back to a writable temporary directory when the configured path is unavailable.
-     */
-    private Path initializeMountPath() {
-        Path defaultPath = Paths.get(System.getProperty(MOUNT_PATH_PROPERTY, DEFAULT_MOUNT_PATH)).toAbsolutePath().normalize();
-        if (ensureDirectory(defaultPath)) {
-            return defaultPath;
-        }
-        Path fallbackPath = Paths.get(System.getProperty("java.io.tmpdir"), FALLBACK_DIRECTORY_NAME).toAbsolutePath().normalize();
-        ensureDirectory(fallbackPath);
-        return fallbackPath;
-    }
-
-    private boolean ensureDirectory(Path path) {
-        try {
-            Files.createDirectories(path);
-            return Files.isWritable(path);
-        } catch (IOException e) {
-            return false;
         }
     }
 
