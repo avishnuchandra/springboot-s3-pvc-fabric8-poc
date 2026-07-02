@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class PvcController {
     }
 
     @GetMapping("/read/{filename}")
-    public ResponseEntity<byte[]> read(@PathVariable String filename) {
+    public ResponseEntity<byte[]> read(@PathVariable String filename) throws IOException {
         byte[] data = pvcService.readFile(filename);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -60,13 +61,13 @@ public class PvcController {
     }
 
     @GetMapping("/files")
-    public ResponseEntity<List<String>> listFiles() {
+    public ResponseEntity<List<String>> listFiles() throws IOException {
         List<String> files = pvcService.listFiles();
         return ResponseEntity.ok(files);
     }
 
     @DeleteMapping("/delete/{filename}")
-    public ResponseEntity<Map<String, String>> delete(@PathVariable String filename) {
+    public ResponseEntity<Map<String, String>> delete(@PathVariable String filename) throws IOException {
         pvcService.deleteFile(filename);
         Map<String, String> response = new HashMap<>();
         response.put("filename", filename);

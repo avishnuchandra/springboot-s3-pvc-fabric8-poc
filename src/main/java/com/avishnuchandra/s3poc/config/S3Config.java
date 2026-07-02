@@ -36,7 +36,7 @@ public class S3Config {
                 ? null
                 : StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
 
-        S3Client.Builder b = S3Client.builder()
+        var b = S3Client.builder()
                 .httpClientBuilder(UrlConnectionHttpClient.builder())
                 .overrideConfiguration(ClientOverrideConfiguration.builder()
                         .apiCallAttemptTimeout(Duration.ofSeconds(60))

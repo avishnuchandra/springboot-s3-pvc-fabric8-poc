@@ -3,20 +3,23 @@ package com.avishnuchandra.s3poc;
 import com.avishnuchandra.s3poc.service.PvcService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class PvcServiceTest {
 
+    @TempDir
+    Path tempDir;
+
     private PvcService pvcService;
 
     @BeforeEach
     void setup() {
-        pvcService = new PvcService();
+        pvcService = new PvcService(tempDir.toString());
     }
 
     @Test
