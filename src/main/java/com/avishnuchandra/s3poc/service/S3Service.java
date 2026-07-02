@@ -27,7 +27,15 @@ public class S3Service {
         try {
             HeadBucketRequest head = HeadBucketRequest.builder().bucket(bucketName).build();
             s3Client.headBucket(head);
+        } catch (NoSuchBucketException e) {
+            CreateBucketRequest req = CreateBucketRequest.builder().bucket(bucketName).build();
+            s3Client.createBucket(req);
         } catch (S3Exception e) {
+            boolean bucketMissing = e.statusCode() == 404
+                    || (e.awsErrorDetails() != null && "NoSuchBucket".equals(e.awsErrorDetails().errorCode()));
+            if (!bucketMissing) {
+                throw e;
+            }
             CreateBucketRequest req = CreateBucketRequest.builder().bucket(bucketName).build();
             s3Client.createBucket(req);
         }
@@ -104,6 +112,7 @@ public class S3Service {
             try {
                 ct = URLConnection.guessContentTypeFromStream(new java.io.ByteArrayInputStream(content));
             } catch (java.io.IOException ignored) {
+                // Fall through to default binary content type.
                 ct = null;
             }
         }
