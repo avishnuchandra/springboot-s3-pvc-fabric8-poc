@@ -1,0 +1,8 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: springboot-s3-pvc
+  namespace: springboot-s3-pvc
+spec:
+  minReplicas: 1
+  maxReplicas: 2

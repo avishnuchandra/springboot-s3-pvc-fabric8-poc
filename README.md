@@ -129,7 +129,11 @@ docker run -e S3_ENDPOINT=http://host.docker.internal:4566 \
   ghcr.io/avishnuchandra/springboot-s3-pvc-fabric8-poc:latest
 ```
 
-## Kubernetes Deployment
+## Kubernetes / OpenShift Deployment
+
+### Namespace
+
+All resources live in the `springboot-s3-pvc` namespace (or `springboot-s3-pvc-dev` / `springboot-s3-pvc-staging` for non-production environments).
 
 ### Prerequisites
 
@@ -141,42 +145,111 @@ docker run -e S3_ENDPOINT=http://host.docker.internal:4566 \
 ./aws/scripts/test-s3-setup.sh <bucket-name>
 ```
 
-2. Create S3 credentials secret (replace with actual credentials):
+2. Create the S3 credentials secret (never commit real credentials):
 
 ```bash
-# edit k8s/secret.yaml first; do not apply placeholder values as-is
-kubectl apply -f k8s/secret.yaml
+# Recommended: imperative creation
+kubectl create secret generic s3-credentials \
+  --from-literal=AWS_ACCESS_KEY_ID='<your-key-id>' \
+  --from-literal=AWS_SECRET_ACCESS_KEY='<your-secret-key>' \
+  --from-literal=AWS_ROLE_ARN='<optional-role-arn-for-irsa>' \
+  -n springboot-s3-pvc
+
+# Or copy k8s/base/secret.yaml, fill in placeholder values, then:
+# kubectl apply -f k8s/base/secret.yaml
 ```
 
-3. Edit `k8s/secret.yaml` with real credentials (or `role-arn` for IRSA/OIDC mode).
+3. Configure IRSA/STS if you are using role-based auth:
+   - Set the ServiceAccount annotation `eks.amazonaws.com/role-arn` in `k8s/base/rbac.yaml`
+   - Optionally provide `AWS_ROLE_ARN` in the secret
 
-### Deploy to Kubernetes
+> **Note**: If your pod uses an IAM role / instance profile (IRSA on EKS, ROSA, etc.), the credentials secret is optional.
+
+### Option A — Apply individual manifests
 
 ```bash
-# Apply RBAC
-kubectl apply -f k8s/rbac.yaml
+# 1. Namespace
+kubectl apply -f k8s/base/namespace.yaml
 
-# Apply ConfigMap
-kubectl apply -f k8s/configmap.yaml
+# 2. RBAC
+kubectl apply -f k8s/base/rbac.yaml
 
-# Apply PVC
-kubectl apply -f k8s/pvc.yaml
+# 3. ConfigMap & Secret
+kubectl apply -f k8s/base/configmap.yaml
+# Create the secret imperatively (see above) or apply k8s/base/secret.yaml
 
-# Apply Deployment
-kubectl apply -f k8s/deployment.yaml
+# 4. Storage
+kubectl apply -f k8s/base/pvc.yaml
 
-# Apply Service
-kubectl apply -f k8s/service.yaml
+# 5. Workload
+kubectl apply -f k8s/base/deployment.yaml
+
+# 6. Network
+kubectl apply -f k8s/base/service.yaml
+kubectl apply -f k8s/base/network-policy.yaml
+
+# 7. OpenShift Route (TLS edge termination)
+oc apply -f k8s/base/route.yaml
+
+# 8. Scaling & Availability
+kubectl apply -f k8s/base/hpa.yaml
+kubectl apply -f k8s/base/pdb.yaml
+
+# 9. Monitoring (requires Prometheus Operator)
+kubectl apply -f k8s/base/monitor.yaml
 ```
 
-### OpenShift Deployment
+### Option B — Deploy with Kustomize
 
 ```bash
-# On OpenShift, add the Route:
-oc apply -f k8s/route.yaml
+# Development (LocalStack, minimal resources)
+kubectl apply -k k8s/overlays/dev
 
-# Access via route
-oc get route springboot-s3-pvc
+# Staging
+kubectl apply -k k8s/overlays/staging
+
+# Production
+kubectl apply -k k8s/overlays/prod
+```
+
+Preview what will be applied without actually applying:
+
+```bash
+kubectl kustomize k8s/overlays/prod
+# or
+kustomize build k8s/overlays/prod
+```
+
+### Verify the Route
+
+```bash
+oc get route springboot-s3-pvc -n springboot-s3-pvc
+# NAME                 HOST/PORT                                                        ...
+# springboot-s3-pvc   springboot-s3-pvc-springboot-s3-pvc.apps.cluster.example.com   ...
+```
+
+### Directory Layout
+
+```
+k8s/
+├── base/
+│   ├── namespace.yaml        # Dedicated namespace
+│   ├── secret.yaml           # Secret template (replace placeholders — do not commit real values)
+│   ├── configmap.yaml        # Application configuration
+│   ├── pvc.yaml              # PersistentVolumeClaim (5 Gi)
+│   ├── deployment.yaml       # Deployment with security context, probes, envFrom
+│   ├── service.yaml          # ClusterIP Service
+│   ├── route.yaml            # OpenShift Route (TLS edge)
+│   ├── rbac.yaml             # ServiceAccount, Role, RoleBinding
+│   ├── network-policy.yaml   # Ingress/egress network policy
+│   ├── hpa.yaml              # HorizontalPodAutoscaler
+│   ├── pdb.yaml              # PodDisruptionBudget
+│   ├── monitor.yaml          # Prometheus ServiceMonitor
+│   └── kustomization.yaml    # Base Kustomization
+└── overlays/
+    ├── dev/              # LocalStack endpoint, 1 replica, small resources
+    ├── staging/          # Real S3 staging bucket, 2 replicas
+    └── prod/             # Production bucket, 3+ replicas, full HPA
 ```
 
 For a full OpenShift checklist, see `OPENSHIFT-DEPLOYMENT.md`.
@@ -236,14 +309,24 @@ src/main/java/com/avishnuchandra/s3poc/
 │   └── KubernetesService.java    # Kubernetes operations
 
 k8s/
-├── deployment.yaml     # Kubernetes Deployment
-├── service.yaml        # Kubernetes Service
-├── pvc.yaml           # PersistentVolumeClaim
-├── rbac.yaml          # ServiceAccount, Role, RoleBinding
-├── configmap.yaml     # ConfigMap
-├── secret.yaml        # Secret with IAM credentials/role ARN references
-├── secret-example.yaml # Example Secret
-└── route.yaml         # OpenShift Route
+├── base/
+│   ├── namespace.yaml
+│   ├── secret.yaml
+│   ├── configmap.yaml
+│   ├── pvc.yaml
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── route.yaml
+│   ├── rbac.yaml
+│   ├── network-policy.yaml
+│   ├── hpa.yaml
+│   ├── pdb.yaml
+│   ├── monitor.yaml
+│   └── kustomization.yaml
+└── overlays/
+    ├── dev/              # Development environment
+    ├── staging/          # Staging environment
+    └── prod/             # Production environment
 
 aws/
 ├── s3-bucket-stack.yaml          # Main CloudFormation template
@@ -265,6 +348,19 @@ aws/
     ├── staging-stack-params.json
     └── prod-stack-params.json
 ```
+
+## API Clients
+
+Two REST client collections are included:
+
+- `postman-collection.json` — Postman collection
+- `insomnia-collection.json` — Insomnia collection with pre-configured environments:
+  - **Local** — `http://localhost:8080`
+  - **OpenShift Dev** — `https://springboot-s3-pvc-springboot-s3-pvc-dev.apps.cluster.example.com`
+  - **OpenShift Staging** — `https://springboot-s3-pvc-springboot-s3-pvc-staging.apps.cluster.example.com`
+  - **OpenShift Prod** — `https://springboot-s3-pvc-springboot-s3-pvc.apps.cluster.example.com`
+
+  Update the environment `base_url` values to match your actual OpenShift cluster hostname.
 
 ## CI/CD
 

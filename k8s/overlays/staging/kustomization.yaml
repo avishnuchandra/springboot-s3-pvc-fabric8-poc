@@ -1,0 +1,13 @@
+# Staging overlay — real AWS S3 staging bucket, medium resources, 2 replicas
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: springboot-s3-pvc-staging
+
+resources:
+  - ../../base
+
+patches:
+  - path: configmap-patch.yaml
+  - path: deployment-patch.yaml
+  - path: hpa-patch.yaml

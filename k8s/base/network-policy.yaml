@@ -1,0 +1,24 @@
+---
+# Allow inbound traffic to port 8080 from any source within the cluster
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: springboot-s3-pvc-allow-ingress
+  namespace: springboot-s3-pvc
+  labels:
+    app: springboot-s3-pvc
+    app.kubernetes.io/name: springboot-s3-pvc
+spec:
+  podSelector:
+    matchLabels:
+      app: springboot-s3-pvc
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - port: 8080
+          protocol: TCP
+  egress:
+    # Allow all outbound traffic (AWS S3, Kubernetes API, DNS, etc.)
+    - {}

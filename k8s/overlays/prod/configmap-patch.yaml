@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: s3-config
+  namespace: springboot-s3-pvc
+data:
+  AWS_REGION: "us-east-1"
+  S3_BUCKET: "prod-app-bucket"
+  S3_ENDPOINT: ""
+  SERVER_PORT: "8080"
+  SPRING_PROFILES_ACTIVE: "openshift"
+  PVC_MOUNT_PATH: "/mnt/data"

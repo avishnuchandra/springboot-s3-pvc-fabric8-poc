@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: s3-config
+  namespace: springboot-s3-pvc
+  labels:
+    app: springboot-s3-pvc
+    app.kubernetes.io/name: springboot-s3-pvc
+    app.kubernetes.io/component: config
+data:
+  # AWS / S3 settings
+  AWS_REGION: "us-east-1"
+  S3_BUCKET: "app-bucket"
+  # Leave empty to use real AWS; set to LocalStack URL for local/dev
+  S3_ENDPOINT: ""
+  S3_INPUT_PREFIX: "input/"
+  S3_PROCESSING_PREFIX: "processing/"
+  S3_ARCHIVE_PREFIX: "archive/"
+  S3_ERROR_PREFIX: "error/"
+  S3_COMPLETED_PREFIX: "completed/"
+  S3_LOGS_PREFIX: "logs/"
+  # Application settings
+  SERVER_PORT: "8080"
+  SPRING_PROFILES_ACTIVE: "openshift"
+  # PVC mount path (must match the volumeMount in the Deployment)
+  PVC_MOUNT_PATH: "/mnt/data"
