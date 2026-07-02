@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-s3-pvc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: springboot-s3-pvc
+  template:
+    metadata:
+      labels:
+        app: springboot-s3-pvc
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/avishnuchandra/springboot-s3-pvc-fabric8-poc:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: S3_BUCKET
+              value: "app-bucket"
+            - name: AWS_REGION
+              value: "us-east-1"
+            - name: S3_ENDPOINT
+              value: ""
+          readinessProbe:
+            httpGet:
+              path: /files/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /files/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      restartPolicy: Always

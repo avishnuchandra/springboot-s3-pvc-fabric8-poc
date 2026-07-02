@@ -1,0 +1,7 @@
+target/
+build/
+*.jar
+*.war
+*.tar
+*.zip
+.env

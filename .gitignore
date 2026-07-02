@@ -1,0 +1,23 @@
+.gradle/
+build/
+out/
+.gradle-wrapper/
+/.idea/
+*.iml
+/.DS_Store
+/.mvn/
+**/target/
+**/build/
+**/*.class
+
+# IDEs
+/.vscode/
+
+# local env files
+.env
+
+# Docker
+.dockerignore
+
+# macOS
+.DS_Store

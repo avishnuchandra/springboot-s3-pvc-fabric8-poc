@@ -1,0 +1,10 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: springboot-s3-pvc
+spec:
+  to:
+    kind: Service
+    name: springboot-s3-pvc
+  port:
+    targetPort: 80

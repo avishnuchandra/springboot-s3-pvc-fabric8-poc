@@ -1,0 +1,9 @@
+s3:
+  accessKey: ${AWS_ACCESS_KEY_ID:}
+  secretKey: ${AWS_SECRET_ACCESS_KEY:}
+  region: ${AWS_REGION:us-east-1}
+  endpoint: ${S3_ENDPOINT:}
+  bucket: ${S3_BUCKET:app-bucket}
+
+server:
+  port: 8080
