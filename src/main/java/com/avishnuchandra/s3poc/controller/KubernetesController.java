@@ -1,8 +1,6 @@
 package com.avishnuchandra.s3poc.controller;
 
 import com.avishnuchandra.s3poc.service.KubernetesService;
-import io.fabric8.kubernetes.api.model.Job;
-import io.fabric8.kubernetes.api.model.Pod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -36,4 +36,4 @@ done
 APP_HOME=$(cd "${APP_HOME:-.}" && pwd -P) || exit
 
 appname="${0##*/}"
-exec "${JAVA_HOME:+"$JAVA_HOME/bin/"}java" -Xmx64m -Xms64m -Dorg.gradle.appname="$appname" -classpath "$APP_HOME/.gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"
+exec "${JAVA_HOME:+"$JAVA_HOME/bin/"}java" -Xmx64m -Xms64m -Dorg.gradle.appname="$appname" -classpath "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"
