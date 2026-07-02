@@ -29,5 +29,5 @@ test {
 }
 
 bootJar {
-    duplicateStrategy = DuplicatesStrategy.EXCLUDE
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
